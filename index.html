@@ -1,0 +1,213 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Niebieskie serce</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+h1 {
+    position: fixed;
+    top: 7%;
+    width: 100%;
+    text-align: center;
+    font-size: clamp(20px, 5vw, 38px);
+    color: #54caff;
+    text-shadow: 0 0 15px #008cff,
+                 0 0 35px #0055ff;
+    letter-spacing: 4px;
+    z-index: 2;
+}
+
+p {
+    position: fixed;
+    bottom: 8%;
+    width: 100%;
+    text-align: center;
+    color: #69d5ff;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px #008cff;
+    z-index: 2;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<h1>❤️ DLA CIEBIE ❤️</h1>
+<p>KAŻDA CZĄSTECZKA TO JEDNO UDERZENIE SERCA</p>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let width, height;
+let particles = [];
+let time = 0;
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    createParticles();
+}
+
+function heart(t) {
+    return {
+        x: 16 * Math.pow(Math.sin(t), 3),
+        y: -(13 * Math.cos(t)
+            - 5 * Math.cos(2 * t)
+            - 2 * Math.cos(3 * t)
+            - Math.cos(4 * t))
+    };
+}
+
+function createParticles() {
+    particles = [];
+
+    const count = Math.min(
+        2200,
+        Math.max(700, Math.floor(width * height / 400))
+    );
+
+    for (let i = 0; i < count; i++) {
+        const t = Math.random() * Math.PI * 2;
+        const point = heart(t);
+
+   
+        const fill = Math.sqrt(Math.random());
+        const scale = Math.min(width, height) / 43;
+
+        particles.push({
+            x: width / 2 + point.x * scale * fill,
+            y: height / 2 + point.y * scale * fill,
+            baseX: point.x * scale * fill,
+            baseY: point.y * scale * fill,
+            size: Math.random() * 1.8 + 0.3,
+            phase: Math.random() * Math.PI * 2,
+            speed: Math.random() * 1.5 + 0.3,
+            drift: Math.random() * 8 + 2
+        });
+    }
+
+  
+    for (let i = 0; i < 700; i++) {
+        const t = Math.random() * Math.PI * 2;
+        const point = heart(t);
+        const scale = Math.min(width, height) / 43;
+
+        particles.push({
+            x: width / 2 + point.x * scale,
+            y: height / 2 + point.y * scale,
+            baseX: point.x * scale,
+            baseY: point.y * scale,
+            size: Math.random() * 2 + 0.5,
+            phase: Math.random() * Math.PI * 2,
+            speed: Math.random() * 2 + 0.5,
+            drift: Math.random() * 5 + 1
+        });
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    time += 0.025;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+    ctx.fillRect(0, 0, width, height);
+
+    const beat = 1 + Math.pow(Math.max(0, Math.sin(time * 2)), 12) * 0.07;
+    const glow = ctx.createRadialGradient(
+        width / 2, height / 2, 5,
+        width / 2, height / 2, Math.min(width, height) * 0.28
+    );
+
+    glow.addColorStop(0, "rgba(0, 100, 255, 0.10)");
+    glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, width, height);
+
+    for (const p of particles) {
+        const wave = Math.sin(time * p.speed + p.phase);
+        const scale = Math.min(width, height) / 43 * beat;
+
+        const x = width / 2
+            + p.baseX * beat
+            + Math.cos(time + p.phase) * p.drift;
+
+        const y = height / 2
+            + p.baseY * beat
+            + wave * p.drift;
+
+        const alpha = 0.35 + (wave + 1) * 0.32;
+
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(40, 165, 255, ${alpha})`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#008cff";
+        ctx.fill();
+
+        // Błysk losowych cząsteczek
+        if (Math.random() > 0.997) {
+            ctx.beginPath();
+            ctx.arc(x, y, p.size * 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(180, 230, 255, 0.9)";
+            ctx.fill();
+        }
+    }
+
+    ctx.shadowBlur = 0;
+
+  
+    const base = ctx.createRadialGradient(
+        width / 2, height / 2 + Math.min(width, height) * 0.30,
+        1,
+        width / 2, height / 2 + Math.min(width, height) * 0.30,
+        Math.min(width, height) * 0.12
+    );
+
+    base.addColorStop(0, "rgba(0, 190, 255, 0.9)");
+    base.addColorStop(0.3, "rgba(0, 100, 255, 0.45)");
+    base.addColorStop(1, "rgba(0, 0, 255, 0)");
+
+    ctx.fillStyle = base;
+    ctx.fillRect(
+        0, height / 2,
+        width, height / 2
+    );
+}
+
+window.addEventListener("resize", resize);
+
+resize();
+animate();
+</script>
+
+</body>
+</html>
